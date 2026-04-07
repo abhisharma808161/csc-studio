@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
 
 # Load AI Model once
-session = new_session("u2netp")
+session = new_session("u2netp-thumbnail")
 
 @app.route('/')
 def home():
