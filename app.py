@@ -2,36 +2,38 @@ import os, io, base64
 from flask import Flask, render_template, request, jsonify
 from rembg import remove, new_session
 from PIL import Image
-from pillow_heif import register_heif_opener
 
-register_heif_opener()
 app = Flask(__name__)
-# 100MB limit for large photos
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
 
-# Load AI Model once
-session = new_session("u2netp-thumbnail")
+# Sirf smallest model use karenge memory bachane ke liye
+session = new_session("u2netp")
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    # Ab design yahan nahi, Hostinger par rahega
+    return "CSC Studio AI Engine is Running!"
 
 @app.route('/remove-bg', methods=['POST'])
-def remove_background():
+def remove_bg():
     try:
+        if 'photo' not in request.files: return jsonify({'error': 'No file'}), 400
         file = request.files['photo']
-        img = Image.open(file.stream).convert("RGBA")
-        no_bg_img = remove(img, session=session)
-        buffered = io.BytesIO()
-        no_bg_img.save(buffered, format="PNG")
-        return jsonify({"image": f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"})
+        
+        input_image = Image.open(file.stream)
+        
+        # Professional cutting yahan ho rahi hai
+        output_image = remove(input_image, session=session)
+        
+        # Result ko wapas bhejne ke liye convert karna
+        img_io = io.BytesIO()
+        output_image.save(img_io, 'PNG')
+        img_io.seek(0)
+        img_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
+        
+        return jsonify({'image': f'data:image/png;base64,{img_base64}'})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
-# --- PUBLIC DEPLOYMENT FIX START ---
 if __name__ == '__main__':
-    # Render provides a PORT environment variable
-    port = int(os.environ.get("PORT", 5000))
-    # host='0.0.0.0' is required for public access
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-# --- PUBLIC DEPLOYMENT FIX END ---
