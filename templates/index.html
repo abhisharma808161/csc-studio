@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CSC Studio Pro - Buttons Fixed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <style>
+        .active-tab { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .corner { position: absolute; width: 22px; height: 22px; background: #4f46e5; border: 3px solid white; border-radius: 50%; transform: translate(-50%,-50%); cursor: move; z-index: 100; }
+        .img-box { width: 100%; height: 380px; display: flex; align-items: center; justify-content: center; border-radius: 1.5rem; overflow: hidden; border: 6px solid white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); background: #f8fafc; }
+    </style>
+</head>
+<body class="bg-slate-200 min-h-screen p-2 font-sans text-slate-800">
+
+    <div class="max-w-6xl mx-auto mb-4 flex justify-between bg-white p-2 rounded-2xl shadow-lg border-2 border-white">
+        <div class="flex gap-2">
+            <button onclick="switchTab('p')" id="tab-p" class="active-tab px-6 py-2 rounded-xl font-black uppercase text-[10px]">📸 Passport</button>
+            <button onclick="switchTab('d')" id="tab-d" class="px-6 py-2 rounded-xl font-black uppercase text-[10px] transition">📄 Documents</button>
+        </div>
+        <button onclick="location.reload()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold text-[10px] uppercase border">↺ Reset</button>
+    </div>
+
+    <div class="max-w-6xl mx-auto bg-white rounded-[2rem] shadow-2xl overflow-hidden min-h-[550px]">
+        
+        <div id="p-ui" class="grid grid-cols-1 lg:grid-cols-12">
+            <div class="lg:col-span-7 bg-slate-50 p-4 border-r text-center">
+                <input type="file" id="p-input" class="hidden" onchange="loadP(this)">
+                <div id="p-upload-box" class="py-24 border-4 border-dashed rounded-3xl cursor-pointer font-black text-slate-400" onclick="document.getElementById('p-input').click()">UPLOAD PHOTO</div>
+                <div id="p-edit-box" class="hidden">
+                    <div id="p-bg-preview" style="background:#87CEEB" class="img-box"><img id="p-img"></div>
+                    <input type="range" id="p-rot" min="-45" max="45" step="0.5" value="0" class="w-full mt-4 accent-indigo-600">
+                </div>
+            </div>
+            
+            <div class="lg:col-span-5 p-6 space-y-4">
+                <button onclick="autoCleanP()" class="w-full bg-indigo-600 text-white font-black py-3 rounded-xl shadow-lg uppercase text-[10px]">✨ AI MAGIC: AUTO CLEAN</button>
+                
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="bg-slate-50 p-2 rounded-lg border text-[10px]">
+                        <span class="font-bold uppercase block mb-1">Brightness</span>
+                        <input type="range" id="p-br" min="50" max="200" value="100" class="w-full">
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-lg border text-[10px]">
+                        <span class="font-bold uppercase block mb-1">Contrast</span>
+                        <input type="range" id="p-ct" min="50" max="200" value="100" class="w-full">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2">
+                    <input type="text" id="p-name" placeholder="FULL NAME" class="p-3 border-2 rounded-xl font-bold uppercase text-xs outline-none focus:border-indigo-600">
+                    <input type="text" id="p-dob" placeholder="DATE / DOB" class="p-3 border-2 rounded-xl font-bold text-xs outline-none focus:border-indigo-600">
+                </div>
+
+                <div id="p-colors" class="grid grid-cols-6 gap-2"></div>
+
+                <select id="p-count" class="w-full p-3 border-2 rounded-xl font-black bg-slate-50 text-xs">
+                    <option value="5">5 Photos (1 Row)</option>
+                    <option value="10">10 Photos (2 Rows)</option>
+                    <option value="15">15 Photos (3 Rows)</option>
+                    <option value="20">20 Photos (4 Rows)</option>
+                    <option value="32">32 Photos (Full Sheet)</option>
+                </select>
+
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <button onclick="generatePassportClient()" class="bg-emerald-500 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-lg hover:bg-emerald-600 transition">💾 Download</button>
+                    <button onclick="generatePassportClient('print')" class="bg-orange-500 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-lg hover:bg-orange-600 transition">🖨️ Print</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="d-ui" class="hidden p-6 space-y-6">
+            <div class="flex justify-center gap-4">
+                <button onclick="dMode='aadhar';toggleDUI()" id="dm-a" class="active-tab px-8 py-2 border-2 rounded-xl font-bold text-[10px] uppercase">Aadhar Combo</button>
+                <button onclick="dMode='single';toggleDUI()" id="dm-s" class="px-8 py-2 border-2 rounded-xl font-bold text-[10px] uppercase bg-slate-50">Single Doc</button>
+            </div>
+            <div id="v-a" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="relative bg-slate-50 p-4 rounded-3xl min-h-[250px] border-2 border-dashed text-center">
+                    <canvas id="can-f"></canvas><div id="han-f"></div>
+                    <button onclick="document.getElementById('in-f').click()" class="mt-2 text-[10px] font-bold text-indigo-600 uppercase">Select Front</button>
+                    <input type="file" id="in-f" class="hidden" onchange="loadD(this,'f')">
+                </div>
+                <div class="relative bg-slate-50 p-4 rounded-3xl min-h-[250px] border-2 border-dashed text-center">
+                    <canvas id="can-b"></canvas><div id="han-b"></div>
+                    <button onclick="document.getElementById('in-b').click()" class="mt-2 text-[10px] font-bold text-indigo-600 uppercase">Select Back</button>
+                    <input type="file" id="in-b" class="hidden" onchange="loadD(this,'b')">
+                </div>
+            </div>
+            <div id="v-s" class="hidden relative bg-slate-50 p-4 rounded-3xl min-h-[350px] border-2 border-dashed text-center">
+                <canvas id="can-s"></canvas><div id="han-s"></div>
+                <button onclick="document.getElementById('in-s').click()" class="mt-2 text-[10px] font-bold text-indigo-600 uppercase">Select Document</button>
+                <input type="file" id="in-s" class="hidden" onchange="loadD(this,'s')">
+            </div>
+            <button onclick="processDocClient()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase shadow-xl tracking-widest text-xs">💾 Download Photocopy</button>
+        </div>
+    </div>
+
+    <script>
+        let pCrop, dData={f:{img:new Image(),pts:[]},b:{img:new Image(),pts:[]},s:{img:new Image(),pts:[]}}, actS, actP=-1, dMode='aadhar';
+        let selectedBG = "#87CEEB";
+
+        function switchTab(t){
+            document.getElementById('p-ui').classList.toggle('hidden', t==='d');
+            document.getElementById('d-ui').classList.toggle('hidden', t==='p');
+            document.getElementById('tab-p').classList.toggle('active-tab', t==='p');
+            document.getElementById('tab-d').classList.toggle('active-tab', t==='d');
+        }
+        function toggleDUI(){
+            document.getElementById('v-a').classList.toggle('hidden', dMode==='single');
+            document.getElementById('v-s').classList.toggle('hidden', dMode==='aadhar');
+            document.getElementById('dm-a').classList.toggle('active-tab', dMode==='aadhar');
+            document.getElementById('dm-s').classList.toggle('active-tab', dMode==='single');
+        }
+
+        async function loadP(input){
+            const fd = new FormData(); fd.append('photo', input.files[0]);
+            document.getElementById('p-upload-box').innerText = "AI PROFESSIONAL CUTTING...";
+            const res = await fetch('/remove-bg', {method:'POST', body:fd});
+            const data = await res.json();
+            document.getElementById('p-upload-box').classList.add('hidden');
+            document.getElementById('p-edit-box').classList.remove('hidden');
+            document.getElementById('p-img').src = data.image;
+            if(pCrop) pCrop.destroy();
+            pCrop = new Cropper(document.getElementById('p-img'), {aspectRatio:3.5/4.5, viewMode:1, dragMode:'move', background:false, ready(){applyPF();} });
+        }
+        function applyPF(){
+            const f = `brightness(${document.getElementById('p-br').value}%) contrast(${document.getElementById('p-ct').value}%) saturate(105%)`;
+            document.querySelectorAll('.cropper-canvas, .cropper-view-box img').forEach(el=>el.style.filter=f);
+        }
+        document.getElementById('p-br').oninput = applyPF;
+        document.getElementById('p-ct').oninput = applyPF;
+        function autoCleanP(){ document.getElementById('p-br').value=125; document.getElementById('p-ct').value=115; applyPF(); }
+        document.getElementById('p-rot').oninput = () => pCrop.rotateTo(document.getElementById('p-rot').value);
+
+        function generatePassportClient(mode) {
+            const count = parseInt(document.getElementById('p-count').value);
+            const name = document.getElementById('p-name').value.toUpperCase().trim();
+            const dob = document.getElementById('p-dob').value.trim();
+            const croppedCanvas = pCrop.getCroppedCanvas({width:600, height:770});
+            const finalSheet = document.createElement('canvas');
+            finalSheet.width = 2480; finalSheet.height = 3508;
+            const ctx = finalSheet.getContext('2d');
+            ctx.fillStyle = "white"; ctx.fillRect(0,0,2480,3508);
+
+            const pw = 413, ph = 531, gapX = 40, gapY = 180, mt = 150, ml = 150;
+            const cols = 5;
+
+            for(let i=0; i<count; i++) {
+                const r = Math.floor(i/cols), c = i%cols;
+                const x = ml + c*(pw+gapX), y = mt + r*(ph+gapY);
+                ctx.fillStyle = selectedBG; ctx.fillRect(x, y, pw, ph);
+                ctx.filter = `brightness(${document.getElementById('p-br').value}%) contrast(${document.getElementById('p-ct').value}%) saturate(105%)`;
+                const photoH = name || dob ? ph * 0.82 : ph;
+                ctx.drawImage(croppedCanvas, 0, 0, croppedCanvas.width, croppedCanvas.height, x, y, pw, photoH);
+                ctx.filter = "none"; ctx.strokeStyle = "black"; ctx.lineWidth = 2; ctx.strokeRect(x,y,pw,ph);
+                if(name || dob) {
+                    const bY = y + photoH; const bH = ph - photoH;
+                    ctx.fillStyle = "white"; ctx.fillRect(x, bY, pw, bH); ctx.strokeRect(x, bY, pw, bH);
+                    ctx.fillStyle = "black"; ctx.textAlign = "center";
+                    if(name && dob) {
+                        ctx.font = "bold 32px Arial"; ctx.fillText(name, x+pw/2, bY + 35);
+                        ctx.font = "bold 28px Arial"; ctx.fillText(dob, x+pw/2, bY + 75);
+                    } else {
+                        ctx.font = "bold 35px Arial"; ctx.fillText(name || dob, x+pw/2, bY + 55);
+                    }
+                }
+            }
+            const url = finalSheet.toDataURL("image/jpeg", 0.98);
+            if(mode === 'print') {
+                const pWin = window.open(""); pWin.document.write(`<img src="${url}" style="width:100%" onload="window.print();window.close();">`);
+            } else {
+                const a = document.createElement('a'); a.href = url; a.download = "Passport_Sheet.jpg"; a.click();
+            }
+        }
+
+        // Document Engine
+        function loadD(input, side){
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const d = dData[side]; d.canvas=document.getElementById('can-'+side); d.ctx=d.canvas.getContext('2d');
+                d.img.onload = () => {
+                    const r = Math.min(d.canvas.parentNode.clientWidth/d.img.width, 250/d.img.height);
+                    d.canvas.width=d.img.width*r; d.canvas.height=d.img.height*r;
+                    d.pts=[[10,10],[d.canvas.width-10,10],[d.canvas.width-10,d.canvas.height-10],[10,d.canvas.height-10]];
+                    drawD(side);
+                }; d.img.src=e.target.result;
+            }; reader.readAsDataURL(input.files[0]);
+        }
+        function drawD(s){
+            const d=dData[s]; d.ctx.clearRect(0,0,d.canvas.width,d.canvas.height);
+            d.ctx.drawImage(d.img,0,0,d.canvas.width,d.canvas.height);
+            d.ctx.strokeStyle="#4f46e5"; d.ctx.lineWidth=3; d.ctx.beginPath();
+            d.ctx.moveTo(d.pts[0][0],d.pts[0][1]); d.pts.forEach(p=>d.ctx.lineTo(p[0],p[1])); d.ctx.closePath(); d.ctx.stroke();
+            const h=document.getElementById('han-'+s); h.innerHTML='';
+            d.pts.forEach((p,i)=>{
+                const div=document.createElement('div'); div.className='corner'; div.style.left=p[0]+'px'; div.style.top=p[1]+'px';
+                div.onmousedown=()=>{actS=s;actP=i;}; h.appendChild(div);
+            });
+        }
+        window.onmousemove=(e)=>{
+            if(actP===-1)return;
+            const r=dData[actS].canvas.getBoundingClientRect();
+            dData[actS].pts[actP]=[e.clientX-r.left, e.clientY-r.top]; drawD(actS);
+        };
+        window.onmouseup=()=>actP=-1;
+
+        function processDocClient() {
+            const sheet = document.createElement('canvas'); sheet.width = 2480; sheet.height = 3508;
+            const ctx = sheet.getContext('2d'); ctx.fillStyle="white"; ctx.fillRect(0,0,2480,3508);
+            function warp(side, x, y, w, h) {
+                const d = dData[side]; if(!d.img.src) return;
+                const r = d.img.width / d.canvas.width;
+                ctx.drawImage(d.img, d.pts[0][0]*r, d.pts[0][1]*r, (d.pts[1][0]-d.pts[0][0])*r, (d.pts[2][1]-d.pts[1][1])*r, x, y, w, h);
+                ctx.strokeStyle="black"; ctx.lineWidth=3; ctx.strokeRect(x,y,w,h);
+            }
+            if(dMode === 'aadhar') { warp('f', 735, 400, 1011, 638); warp('b', 735, 1150, 1011, 638); }
+            else { warp('s', 415, 300, 1650, 2330); }
+            const a = document.createElement('a'); a.href = sheet.toDataURL("image/jpeg", 0.95);
+            a.download = "Doc_Processed.jpg"; a.click();
+        }
+
+        const colors=['#87CEEB','#00BFFF','#FFFFFF','#D3D3D3','#90EE90','#FFD700','#FF4500'];
+        const grid=document.getElementById('p-colors');
+        colors.forEach(c=>{
+            const b = document.createElement('button'); b.className="h-8 rounded-lg border shadow-sm"; b.style.backgroundColor=c;
+            b.onclick=() => { selectedBG = c; document.getElementById('p-bg-preview').style.background = c; };
+            grid.appendChild(b);
+        });
+    </script>
+</body>
+</html>
